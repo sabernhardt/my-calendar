@@ -237,7 +237,7 @@ function my_calendar_upcoming_events( $args ) {
 		}
 	}
 	/**
-	 * Replace the list header for upcoming events lists. Default value `<ul id='upcoming-events-$hash' class='mc-event-list upcoming-events'$lang>`.
+	 * Replace the list header for upcoming events lists. Default value `<div class='mc-event-list-container'><ul id='upcoming-events-$hash' class='mc-event-list upcoming-events'$lang>`.
 	 *
 	 * @hook mc_upcoming_events_header
 	 *
@@ -247,7 +247,7 @@ function my_calendar_upcoming_events( $args ) {
 	 */
 	$header = apply_filters( 'mc_upcoming_events_header', $header );
 	/**
-	 * Replace the list footer for upcoming events lists. Default value `</ul>`.
+	 * Replace the list footer for upcoming events lists. Default value `</ul></div>`.
 	 *
 	 * @hook mc_upcoming_events_footer
 	 *
@@ -260,10 +260,12 @@ function my_calendar_upcoming_events( $args ) {
 	if ( '' !== $output ) {
 		$output = $header . $navigation . $output . $footer;
 		$return = mc_run_shortcodes( $output );
-	} else {
+	} elseif ( '' !== $args['substitute'] ) {
 		$header = str_replace( 'mc-event-list ', 'mc-event-list no-events-fallback ', $header );
 		$class  = ( str_contains( $args['template'], 'list_preset_' ) ) ? "list-preset $args[template]" : '';
 		$return = $header . $navigation . '<li class="' . $class . '">' . wp_unslash( $args['substitute'] ) . '</li>' . $footer;
+	} else {
+		$return = '';
 	}
 
 	if ( $args['site'] ) {
