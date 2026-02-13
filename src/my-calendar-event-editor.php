@@ -395,6 +395,9 @@ function mc_update_event( $field, $data, $event, $type = '%d' ) {
  */
 function mc_admin_save() {
 	$action = ! empty( $_POST['event_action'] ) ? sanitize_text_field( $_POST['event_action'] ) : '';
+	if ( 'delete' === $action ) {
+		return;
+	}
 	if ( isset( $_GET['mode'] ) ) {
 		$action = sanitize_text_field( $_GET['mode'] );
 	}
@@ -407,6 +410,7 @@ function mc_admin_save() {
 		}
 
 		global $mc_output;
+
 		$count        = 0;
 		$do_redirect  = false;
 		$redirect_url = '';
@@ -1604,8 +1608,12 @@ function mc_form_fields( $data, $mode, $event_id ) {
 <div class="ui-sortable meta-box-sortables event-primary">
 	<div class="postbox">
 		<?php
+		$edit_text = '';
+		if ( 'edit' === $mode ) {
 			// Translators: Event title.
-			$text = ( 'edit' === $mode ) ? sprintf( __( 'Editing Event: "%s"', 'my-calendar' ), wp_unslash( $data->event_title ) ) : __( 'Add Event', 'my-calendar' );
+			$edit_text = ( mc_is_recurring( $event_id ) ) ? sprintf( __( 'Editing Recurring Event: "%s"', 'my-calendar' ), wp_unslash( $data->event_title ) ) : sprintf( __( 'Editing Event: "%s"', 'my-calendar' ), wp_unslash( $data->event_title ) );
+		}
+		$text = ( 'edit' === $mode ) ? $edit_text : __( 'Add Event', 'my-calendar' );
 		?>
 		<h2><?php echo esc_html( $text ); ?></h2>
 		<div class="inside">

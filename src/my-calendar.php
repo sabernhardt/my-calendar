@@ -4,7 +4,7 @@
  *
  * @package     MyCalendar
  * @author      Joe Dolson
- * @copyright   2009-2025 Joe Dolson
+ * @copyright   2009-2026 Joe Dolson
  * @license     GPL-2.0+
  *
  * @wordpress-plugin
@@ -16,11 +16,11 @@
  * Text Domain: my-calendar
  * License:     GPL-2.0+
  * License URI: http://www.gnu.org/license/gpl-2.0.txt
- * Version:     3.7.0-beta
+ * Version:     3.7.3
  */
 
 /*
-	Copyright 2009-2025  Joe Dolson (email : joe@joedolson.com)
+	Copyright 2009-2026  Joe Dolson (email : joe@joedolson.com)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ function mc_get_version( $version = true ) {
 	if ( ! $version ) {
 		return get_option( 'mc_version', '' );
 	}
-	return '3.7.0-alpha';
+	return '3.7.3';
 }
 
 define( 'MC_DEBUG', false );
@@ -489,7 +489,8 @@ function my_calendar_menu() {
 			if ( isset( $_GET['event_id'] ) ) {
 				$event_id = absint( $_GET['event_id'] );
 				// Translators: Title of event.
-				$page_title = sprintf( __( 'Editing Event: %s', 'my-calendar' ), esc_html( wp_strip_all_tags( wp_unslash( mc_get_data( 'event_title', $event_id ) ) ) ) );
+				$string     = ( mc_is_recurring( $event_id ) ) ? __( 'Editing Recurring Event: "%s"', 'my-calendar' ) : __( 'Editing Event: "%s"', 'my-calendar' );
+				$page_title = sprintf( $string, esc_html( wp_strip_all_tags( wp_unslash( mc_get_data( 'event_title', $event_id ) ) ) ) );
 			} else {
 				$page_title = __( 'Add New Event', 'my-calendar' );
 			}

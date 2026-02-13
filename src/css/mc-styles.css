@@ -370,7 +370,7 @@ ol.mc-repeat-events li:last-of-type .buttons {
 	gap: 4px;
 }
 
-.mc-template-layout {
+.mc-template-layout:not(.legacy-templates) {
 	display: flex;
 	gap: 32px;
 }
@@ -598,7 +598,7 @@ ul.mc-file-list ul li {
 	width: 100%
 }
 
-.my-calendar-admin .message pre, .my-calendar-admin pre {
+.my-calendar-admin .message pre, .my-calendar-admin pre:not(.CodeMirror pre) {
 	background: #fff;
 	padding: 5px;
 	border: 1px solid #dcdcde;
@@ -1181,7 +1181,7 @@ input[name="mc_uri"] {
 #my-calendar-manage .inside {
 	display: flex;
 	flex-wrap: wrap;
-	column-gap: 20px;
+	column-gap: 36px;
 }
 
 #mc-generator .custom {

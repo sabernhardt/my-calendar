@@ -964,7 +964,7 @@ function mc_show_details( $time, $type ) {
 	 */
 	$no_link = apply_filters( 'mc_disable_link', false, array() );
 
-	if ( 'card' === $type ) {
+	if ( 'card' === $type || 'instance' === $time ) {
 		return true;
 	} else {
 		return ( ( ( 'calendar' === $type && 'true' === mc_get_option( 'open_uri' ) && 'day' !== $time ) || $no_link ) ) ? false : true;
@@ -1096,7 +1096,7 @@ function mc_list_title( $events ) {
 	 *
 	 * @return {string}
 	 */
-	$event_title = apply_filters( 'mc_list_title_title', strip_tags( stripcslashes( $now->event_title ), mc_strip_tags() ), $now );
+	$event_title = apply_filters( 'mc_list_title_title', strip_tags( wp_unslash( $now->event_title ), mc_strip_tags() ), $now );
 	if ( 0 === $count ) {
 		$cstate = $event_title;
 	} elseif ( 1 === $count ) {
@@ -1145,7 +1145,7 @@ function mc_list_titles( $events ) {
 		 *
 		 * @return {string}
 		 */
-		$title    = apply_filters( 'mc_list_event_title_hint', strip_tags( stripcslashes( $now->event_title ), mc_strip_tags() ), $now, $events );
+		$title    = apply_filters( 'mc_list_event_title_hint', strip_tags( wp_unslash( $now->event_title ), mc_strip_tags() ), $now, $events );
 		$titles[] = $title;
 	}
 	/**
@@ -1342,6 +1342,7 @@ function mc_show_event_template( $content ) {
 		// Some early versions of this placed the shortcode into the post content. Strip that out.
 		$new_content = $content;
 		if ( 'mc-events' === $post->post_type ) {
+			$time     = 'instance';
 			$event_id = get_post_meta( $post->ID, '_mc_event_id', true );
 			if ( isset( $_GET['mc_id'] ) && mc_valid_id( $_GET['mc_id'] ) ) {
 				$mc_id = intval( $_GET['mc_id'] );
@@ -1360,7 +1361,6 @@ function mc_show_event_template( $content ) {
 			}
 			if ( is_object( $event ) ) {
 				$date = mc_date( 'Y-m-d', strtotime( $event->occur_begin ), false );
-				$time = mc_date( 'H:i:00', strtotime( $event->occur_begin ), false );
 			} else {
 				return $content;
 			}
@@ -1377,7 +1377,7 @@ function mc_show_event_template( $content ) {
 				 * @param {string} $new_content Content to prepend before the event.
 				 * @param {object} $event Event object.
 				 * @param {string} $view View type.
-				 * @param {string} $time Time view.
+				 * @param {string} $time Time view. Month, week, day, or instance.
 				 *
 				 * @return {string}
 				 */
@@ -1405,7 +1405,7 @@ function mc_show_event_template( $content ) {
 				 * @param {string} $new_content Content to append after the event.
 				 * @param {object} $event Event object.
 				 * @param {string} $view View type.
-				 * @param {string} $time Time view.
+				 * @param {string} $time Time view. Month, week, day, or instance.
 				 * @param {string} $date Date being processed.
 				 *
 				 * @return {string}
@@ -1639,6 +1639,11 @@ function mc_calendar_params( $args ) {
 	}
 
 	$time_enabled = mc_get_option( 'time_views' );
+	// If month view is enabled, automatically enable other future month views.
+	if ( in_array( 'month', $time_enabled, true ) ) {
+		$alt_months   = array( 'month+1', 'month+2', 'month+3', 'month+4', 'month+5', 'month+6', 'month+7', 'month+8', 'month+9', 'month+10', 'month+11', 'month+12' );
+		$time_enabled = array_merge( $time_enabled, $alt_months );
+	}
 	if ( ! in_array( $time, $time_enabled, true ) ) {
 		$time = ( in_array( 'month', $enabled, true ) ) ? 'month' : $time_enabled[0];
 	}
@@ -2838,7 +2843,9 @@ function my_calendar_locations_list( $show = 'list', $datatype = 'id', $group = 
 	$locations   = mc_get_list_locations( $datatype, $datatype, ARRAY_A );
 	$current_url = mc_get_uri();
 	$current_url = ( '' !== $target_url && esc_url( $target_url ) ) ? $target_url : $current_url;
-
+	if ( current_user_can( 'manage_options' ) && count( $locations ) <= 1 ) {
+		return __( "No locations contain the field you're trying to filter. Update your locations to use this option.", 'my-calendar' );
+	}
 	if ( count( $locations ) > 1 ) {
 		if ( 'list' === $show ) {
 			$url     = mc_build_url(
@@ -2880,7 +2887,7 @@ function my_calendar_locations_list( $show = 'list', $datatype = 'id', $group = 
 				if ( is_numeric( $value ) && 'id' === $ltype ) {
 					$value = mc_location_data( 'location_label', $value );
 				} else {
-					$value = strip_tags( stripcslashes( $value ), mc_strip_tags() );
+					$value = strip_tags( wp_unslash( $value ), mc_strip_tags() );
 				}
 				if ( '' === trim( $value ) ) {
 					continue;

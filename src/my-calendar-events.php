@@ -460,7 +460,7 @@ function mc_get_new_events( $cat_id = false ) {
 	} else {
 		$cat = 'WHERE event_approved IN (' . $public . ') AND event_flagged <> 1';
 	}
-	$exclude_categories = mc_private_categories( $args );
+	$exclude_categories = mc_private_categories();
 	/**
 	 * Filter how many days of newly added events will be included in ICS subscription links.
 	 *
@@ -736,8 +736,7 @@ function mc_get_event( $id, $type = 'object' ) {
 		return $event;
 	} else {
 		$date         = mc_date( 'Y-m-d', strtotime( $event->occur_begin ), false );
-		$time         = mc_date( 'H:i:s', strtotime( $event->occur_begin ), false );
-		$event_output = my_calendar_draw_event( $event, 'single', $date, $time, 'single' );
+		$event_output = my_calendar_draw_event( $event, 'single', $date, 'instance', 'single' );
 		$value        = '<div id="mc_event">' . $event_output['html'] . '</div>';
 
 		return $value;
@@ -817,11 +816,11 @@ function my_calendar_events_now( $category = 'default', $template = '<strong>{li
 	}
 	$mcdb               = mc_is_remote_db();
 	$arr_events         = array();
-	$select_published   = mc_select_published( $args );
+	$select_published   = mc_select_published();
 	$cat_limit          = ( 'default' !== $category ) ? mc_select_category( $category ) : array();
 	$join               = ( isset( $cat_limit[0] ) ) ? $cat_limit[0] : '';
 	$select_category    = ( isset( $cat_limit[1] ) ) ? $cat_limit[1] : '';
-	$exclude_categories = mc_private_categories( $args );
+	$exclude_categories = mc_private_categories();
 	$ts_string          = mc_ts();
 
 	// May add support for location/author/host later.
@@ -928,11 +927,11 @@ function my_calendar_events_next( $category = 'default', $template = '<strong>{l
 	}
 	$mcdb               = mc_is_remote_db();
 	$arr_events         = array();
-	$select_published   = mc_select_published( $args );
+	$select_published   = mc_select_published();
 	$cat_limit          = ( 'default' !== $category ) ? mc_select_category( $category ) : array();
 	$join               = ( isset( $cat_limit[0] ) ) ? $cat_limit[0] : '';
 	$select_category    = ( isset( $cat_limit[1] ) ) ? $cat_limit[1] : '';
-	$exclude_categories = mc_private_categories( $args );
+	$exclude_categories = mc_private_categories();
 	$ts_string          = mc_ts();
 
 	// May add support for location/author/host later.
@@ -1057,7 +1056,7 @@ function mc_instance_list( $args ) {
 				} elseif ( mc_key_exists( $template ) ) {
 					$template = mc_get_custom_template( $template );
 				} else {
-					$details = my_calendar_draw_event( $event, 'single', $event->event_begin, $event->event_time, '', '', $array );
+					$details = my_calendar_draw_event( $event, 'single', $event->event_begin, 'instance', '', '', $array );
 				}
 			}
 			$item = ( '' !== $list ) ? mc_draw_template( $array, $list ) : '';

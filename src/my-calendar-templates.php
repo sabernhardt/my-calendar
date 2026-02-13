@@ -80,7 +80,7 @@ function mc_draw_template( $data, $template, $type = 'list', $event = false ) {
 			}
 		}
 	}
-	$template = stripcslashes( $template );
+	$template = wp_kses_post( wp_unslash( $template ) );
 	// If there are no brace characters, there is nothing to replace.
 	if ( strpos( $template, '{' ) === false ) {
 		return trim( $template );
@@ -123,7 +123,7 @@ function mc_draw_template( $data, $template, $type = 'list', $event = false ) {
 					}
 				} else {
 					// don't do preg match for simple templates.
-					$template = stripcslashes( str_replace( '{' . $key . '}', $value, $template ) );
+					$template = wp_unslash( str_replace( '{' . $key . '}', $value, $template ) );
 				}
 			}
 			// End {$key check.
@@ -357,7 +357,7 @@ function mc_google_cal( $dtstart, $dtend, $url, $title, $location, $description 
 	 *
 	 * @return {string} Encoded parameter.
 	 */
-	$base .= apply_filters( 'mc_gcal_description', '&details=' . urlencode( stripcslashes( trim( $description ) ) ), $description );
+	$base .= apply_filters( 'mc_gcal_description', '&details=' . urlencode( wp_unslash( trim( $description ) ) ), $description );
 	$base .= '&sf=true&output=xml';
 
 	return $source . $base;
@@ -429,9 +429,8 @@ function mc_location_image( $event, $source = 'event' ) {
 	if ( ! $event ) {
 		return '';
 	}
-	$source = 'location';
-	$post   = ( absint( $event->location_post ) ) ? $event->location_post : mc_get_location_post( $event->location_id );
-	$image  = get_the_post_thumbnail( $post, 'full' );
+	$post  = ( absint( $event->location_post ) ) ? $event->location_post : mc_get_location_post( $event->location_id );
+	$image = get_the_post_thumbnail( $post, 'full' );
 
 	return $image;
 }
@@ -730,7 +729,7 @@ function mc_create_tags( $event, $context = 'filters' ) {
 
 	// Links.
 	$templates  = mc_get_option( 'templates' );
-	$e_template = ( ! empty( $templates['label'] ) ) ? stripcslashes( $templates['label'] ) : __( 'Details about', 'my-calendar' ) . ' {title}';
+	$e_template = ( ! empty( $templates['label'] ) ) ? wp_unslash( $templates['label'] ) : __( 'Details about', 'my-calendar' ) . ' {title}';
 	/**
 	 * Filter template for the `{details}` output. Default: `Details about {title}`.
 	 *
@@ -1031,37 +1030,35 @@ function mc_get_details_link( $event ) {
 	 */
 	$permalinks = apply_filters( 'mc_use_permalinks', mc_get_option( 'use_permalinks' ) );
 	$permalinks = ( 1 === $permalinks || true === $permalinks || 'true' === $permalinks ) ? true : false;
-	$permalink  = mc_event_link( $event );
-	if ( '' === trim( $permalink ) ) {
-		if ( 0 !== (int) $event->event_post && 'true' !== mc_get_option( 'remote' ) && $permalinks ) {
-			$permalink = get_permalink( $event->event_post );
-			if ( mc_is_recurring( $event ) ) {
-				$permalink = add_query_arg( 'mc_id', $event->occur_id, $permalink );
-			}
-		} else {
-			if ( mc_get_uri( 'boolean' ) ) {
-				$permalink = mc_build_url(
-					array( 'mc_id' => $event->occur_id ),
-					array(
-						'month',
-						'dy',
-						'yr',
-						'ltype',
-						'loc',
-						'mcat',
-						'format',
-						'feed',
-						'page_id',
-						'p',
-						'mcs',
-						'time',
-						'page',
-						'mode',
-						'event_id',
-					),
-					$uri
-				);
-			}
+	$permalink  = '';
+	if ( 0 !== (int) $event->event_post && 'true' !== mc_get_option( 'remote' ) && $permalinks ) {
+		$permalink = get_permalink( $event->event_post );
+		if ( mc_is_recurring( $event ) ) {
+			$permalink = add_query_arg( 'mc_id', $event->occur_id, $permalink );
+		}
+	} else {
+		if ( mc_get_uri( 'boolean' ) ) {
+			$permalink = mc_build_url(
+				array( 'mc_id' => $event->occur_id ),
+				array(
+					'month',
+					'dy',
+					'yr',
+					'ltype',
+					'loc',
+					'mcat',
+					'format',
+					'feed',
+					'page_id',
+					'p',
+					'mcs',
+					'time',
+					'page',
+					'mode',
+					'event_id',
+				),
+				$uri
+			);
 		}
 	}
 	/**
@@ -1136,7 +1133,7 @@ function mc_get_uri( $event = false, $args = array() ) {
  */
 function mc_get_details_label( $event, $e ) {
 	$templates  = mc_get_option( 'templates' );
-	$e_template = ( ! empty( $templates['label'] ) ) ? stripcslashes( $templates['label'] ) : __( 'Read more', 'my-calendar' );
+	$e_template = ( ! empty( $templates['label'] ) ) ? wp_unslash( $templates['label'] ) : __( 'Read more', 'my-calendar' );
 	$e_label    = wp_kses(
 		mc_draw_template( $e, $e_template ),
 		array(
@@ -2237,6 +2234,26 @@ function mc_template_location_access( $data, $text = false ) {
 		</div>';
 	}
 	$output = ( '' !== $output ) ? '<div class="mc-access-information">' . $output . '</div>' : '';
+
+	echo wp_kses_post( $output );
+}
+
+/**
+ * Get the featured image for a location.
+ *
+ * @param object       $data Calendar view data.
+ * @param string|array $size Image size to request. Default 'full'.
+ */
+function mc_template_location_image( $data, $size = 'full' ) {
+	$location = $data->location;
+	$output   = '';
+	$post_id  = ( is_object( $location ) && property_exists( $location, 'location_post' ) ) ? $location->location_post : false;
+	if ( $post_id ) {
+		$image = get_the_post_thumbnail( $post_id, $size );
+		if ( $image ) {
+			$output = '<div class="mc-featured-image mc-location-image">' . $image . '</div>';
+		}
+	}
 
 	echo wp_kses_post( $output );
 }

@@ -160,7 +160,10 @@ function mc_api_format_csv( $data ) {
 			}
 
 			foreach ( $values as $key => $text ) {
-				$values[ $key ] = str_replace( array( "\r\n", "\r", "\n" ), '<br class="mc-export" />', trim( wp_kses_stripslashes( $text ) ) );
+				if ( is_array( $text ) ) {
+					$text = implode( '|', $text );
+				}
+				$values[ $key ] = mc_clean_data( $text );
 			}
 			if ( ! $keyed ) {
 				$keys = array_keys( $values );
@@ -178,12 +181,30 @@ function mc_api_format_csv( $data ) {
 	}
 	header( 'Pragma: no-cache' );
 	header( 'Expires: 0' );
+	$string = stream_get_contents( $stream );
+	// Close the stream. Not a filesystem write.
+	fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
-	echo stream_get_contents( $stream );
-	// Close the stream.
-	fclose( $stream );
+	echo map_deep( $string, 'wp_kses_post' );
 	ob_end_flush();
 	die;
+}
+
+/**
+ * Replace line breaks with detectable breaks.
+ *
+ * @param string $text Text to replace breaks in.
+ *
+ * @return string
+ */
+function mc_clean_data( $text ) {
+	return str_replace(
+		array( "\r\n", "\r", "\n" ),
+		'<br class="mc-export" />',
+		trim(
+			wp_kses_stripslashes( $text )
+		)
+	);
 }
 
 /**

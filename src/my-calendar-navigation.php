@@ -429,7 +429,7 @@ function mc_category_key( $category, $id = '' ) {
 		if ( 1 === (int) $cat->category_private ) {
 			$class .= ' private';
 		}
-		$cat_name = wp_strip_all_tags( stripcslashes( $cat->category_name ) );
+		$cat_name = wp_strip_all_tags( wp_unslash( $cat->category_name ) );
 		$cat_name = ( '' === $cat_name ) ? '<span class="screen-reader-text">' . __( 'Untitled Category', 'my-calendar' ) . '</span>' : $cat_name;
 		$cat_key  = '';
 		if ( '' !== $cat->category_icon && $has_icons ) {
@@ -488,8 +488,8 @@ function mc_sub_links() {
 	$search  = array( 'http:', 'https:' );
 
 	$google = str_replace( $search, $replace, get_feed_link( 'my-calendar-google' ) );
+	$ical   = $google;
 	$google = add_query_arg( 'cid', $google, 'https://www.google.com/calendar/render' );
-	$ical   = get_feed_link( 'my-calendar-ics' );
 
 	$sub_google = "<li class='ics google'><a href='" . esc_url( $google ) . "' rel='nofollow'><span class='mc-icon' aria-hidden='true'></span>" . __( '<span class="maybe-hide">Subscribe in </span>Google', 'my-calendar' ) . '</a></li>';
 	$sub_ical   = "<li class='ics ical'><a href='" . esc_attr( str_replace( $search, $replace, esc_url( $ical ) ) ) . "' rel='nofollow'><span class='mc-icon' aria-hidden='true'></span>" . __( '<span class="maybe-hide">Subscribe in </span>iCal', 'my-calendar' ) . '</a></li>';
@@ -897,7 +897,7 @@ function my_calendar_categories_list( $show = 'list', $context = 'public', $grou
 			<option value="all">' . __( 'All Categories', 'my-calendar' ) . '</option>' . "\n";
 
 		foreach ( $categories as $category ) {
-			$category_name = strip_tags( stripcslashes( $category->category_name ), mc_strip_tags() );
+			$category_name = strip_tags( wp_unslash( $category->category_name ), mc_strip_tags() );
 			$mcat          = ( empty( $_GET['mcat'] ) ) ? '' : (int) $_GET['mcat'];
 			$category_id   = (int) $category->category_id;
 			if ( ! empty( $options ) ) {
@@ -1124,7 +1124,7 @@ function mc_date_switcher( $type = 'calendar', $cid = 'all', $time = 'month', $d
 	$date_switcher .= $p;
 	$date_switcher .= '<option value="' . $time . '"' . selected( $time, $c_year, false ) . '>' . $time . "</option>\n";
 	$date_switcher .= $f;
-	$date_switcher .= '</select> <input type="submit" class="button" value="' . __( 'Go', 'my-calendar' ) . '" /></div></form></div>';
+	$date_switcher .= '</select> <input type="submit" class="button" id="' . $cid . '-button" value="' . __( 'Go', 'my-calendar' ) . '" /></div></form></div>';
 
 	/**
 	 * Filter the HTML for the date jumpbox controls.

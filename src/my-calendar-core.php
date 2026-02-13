@@ -252,6 +252,14 @@ function mc_style_variables( $styles = array() ) {
 			$styles[ $key ] = $value;
 		}
 	}
+	/**
+	 * Filter the core My Calendar CSS variables.
+	 *
+	 * @param {array} $styles Array of style variables.
+	 *
+	 * @return {array}
+	 */
+	$styles = apply_filters( 'mc_style_variables', $styles );
 
 	return $styles;
 }
@@ -1265,7 +1273,7 @@ function mc_do_upgrades( $upgrade_path ) {
 	// Retain upgrade paths for 5 years.
 	foreach ( $upgrade_path as $upgrade ) {
 		switch ( $upgrade ) {
-			case '3.7.0': // Date TBD.
+			case '3.7.0': // 2026-01-20
 				// Accessibility terms are now saved as taxonomy terms.
 				mc_migrate_event_accessibility();
 				mc_migrate_location_accessibility();
@@ -2109,8 +2117,8 @@ function mc_locate_calendar() {
 	}
 
 	if ( ! $has_uri ) {
-		// Locate oldest post containing my_calendar shortcode. Will also locate upcoming events shortcodes, however.
-		$post_ID = $wpdb->get_var( "SELECT id FROM $wpdb->posts WHERE post_content LIKE '%[my_calendar%' AND post_status = 'publish'" );
+		// Locate oldest post containing my_calendar shortcode.
+		$post_ID = $wpdb->get_var( "SELECT id FROM $wpdb->posts WHERE post_content LIKE '%[my_calendar %' AND post_status = 'publish'" );
 		if ( $post_ID ) {
 			$link = get_permalink( $post_ID );
 			mc_update_option( 'uri_id', $post_ID );
